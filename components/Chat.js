@@ -18,7 +18,8 @@ export default class Chat extends React.Component {
         _id: '',
         name: '',
         avatar: ''        
-      }
+      },
+      isConnected: false
     };
 
     const firebaseConfig = {
@@ -40,6 +41,7 @@ export default class Chat extends React.Component {
     this.referenceChatMessages = firebase.firestore().collection("messages");
   }
 
+  // get messages from asyncStorage
   async getMessages() {
     let messages = "";
     try {
@@ -94,27 +96,41 @@ export default class Chat extends React.Component {
     this.referenceChatMessages = firebase.firestore().collection("messages");
     this.unsubscribe = this.referenceChatMessages.onSnapshot(this.onCollectionUpdate);
 
-    // Firebase anonymous authentication
-    this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
-      if (!user) {
-        firebase.auth().signInAnonymously();
-      }
-      //update user state with currently active user data
-      this.setState({
-        uid: user.uid,
-        messages: [],
-      });
-      this.unsubscribe = this.referenceChatMessages
-        .orderBy("createdAt", "desc")
-        .onSnapshot(this.onCollectionUpdate);
-    });
+     // check if user is online
+     NetInfo.fetch().then(connection => {
+      if (connection.isConnected) {
+        // Firebase authorization
+        this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
+          if (!user) {
+            await firebase.auth().signInAnonymously();
+          }
+          // update state with currently active user's data
+          this.setState({
+            messages: [],
+            user: {
+              _id: user.uid,
+              name, 
+              avatar
+            },
+            isConnected: true
+          });
+          this.unsubscribe = this.referenceChatMessages.orderBy('createdAt', 'desc').onSnapshot(this.onCollectionUpdate);
+        });
+      } else {
+        // get messages from asyncStorage if user is offline
+        this.getMessages();
+        this.setState({ isConnected: false });
+      }});
+        
 
   }
 
   componentWillUnmount() {
+    if (this.state.isConnected) {
     // stops listening for changes in messages
     this.unsubscribe();
     this.authUnsubscribe();
+  }
   }
 
   onSend(messages = []) {
@@ -128,6 +144,7 @@ export default class Chat extends React.Component {
     );
   }
 
+  // save messages to asyncStorage
   async saveMessages() {
     try {
       await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
@@ -159,6 +176,7 @@ export default class Chat extends React.Component {
   }
 
   onCollectionUpdate = (querySnapshot) => {
+    if (!this.state.isConnected) return
     const messages = [];
     // go through each document
     querySnapshot.forEach((doc) => {
