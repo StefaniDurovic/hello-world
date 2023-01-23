@@ -8,18 +8,17 @@ const firebase = require('firebase');
 require('firebase/firestore');
 
 export default class Chat extends React.Component {
-
   constructor() {
     super();
     this.state = {
       messages: [],
       uid: 0,
       user: {
-        _id: '',
-        name: '',
-        avatar: ''        
+        _id: "",
+        name: "",
+        avatar: "",
       },
-      isConnected: false
+      isConnected: false,
     };
 
     const firebaseConfig = {
@@ -29,13 +28,13 @@ export default class Chat extends React.Component {
       storageBucket: "chat-app-caf26.appspot.com",
       messagingSenderId: "338678982602",
       appId: "1:338678982602:web:750b5ec35b6674dd615133",
-      measurementId: "G-3TENPQWHYX"
-    }
+      measurementId: "G-3TENPQWHYX",
+    };
 
     // Firebase initialization
-    if (!firebase.apps.length){
+    if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
-      }
+    }
 
     // reference to 'messages' collection
     this.referenceChatMessages = firebase.firestore().collection("messages");
@@ -53,101 +52,79 @@ export default class Chat extends React.Component {
       console.log(error.message);
     }
   }
- 
+
   componentDidMount() {
     let name = this.props.route.params.name;
     this.props.navigation.setOptions({ title: name });
 
-    // checks if user is online
-    NetInfo.fetch().then(connection => {
-      if (connection.isConnected) {
-        console.log('online');
-      } else {
-        console.log('offline');
-      }
-    });
-
-    // // sets static messages
-    // this.setState({
-    //   messages: [
-    //     // {
-    //     //   _id: 1,
-    //     //   text: "Hello developer",
-    //     //   createdAt: new Date(),
-    //     //   user: {
-    //     //     _id: 2,
-    //     //     name: "React Native",
-    //     //     avatar: "https://placeimg.com/140/140/any",
-    //     //   },
-    //     // },
-    //     {
-    //         _id: 2,
-    //         text: 'Welcome to your chatroom!',
-    //         createdAt: new Date(),
-    //         system: true,
-    //        },
-    //   ],
-    // });
-
     // retrieves messages from asyncStorage
     this.getMessages();
 
-    // creates reference to messages collection
-    this.referenceChatMessages = firebase.firestore().collection("messages");
-    this.unsubscribe = this.referenceChatMessages.onSnapshot(this.onCollectionUpdate);
-
-     // check if user is online
-     NetInfo.fetch().then(connection => {
+    // check if user is online
+    NetInfo.fetch().then((connection) => {
       if (connection.isConnected) {
-        // Firebase authorization
-        this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
-          if (!user) {
-            await firebase.auth().signInAnonymously();
-          }
-          // update state with currently active user's data
-          this.setState({
-            messages: [],
-            user: {
-              _id: user.uid,
-              name, 
-              avatar
-            },
-            isConnected: true
-          });
-          this.unsubscribe = this.referenceChatMessages.orderBy('createdAt', 'desc').onSnapshot(this.onCollectionUpdate);
+        console.log("online");
+
+        this.setState({
+          isConnected: true,
         });
+
+        // Firebase authorization
+        this.authUnsubscribe = firebase
+          .auth()
+          .onAuthStateChanged(async (user) => {
+            if (!user) {
+              await firebase.auth().signInAnonymously();
+            }
+            // update state with currently active user's data
+            this.setState({
+              messages: [],
+              user: {
+                _id: user.uid,
+                name,
+                avatar,
+              },
+            });
+          });
+        this.unsubscribe = this.referenceChatMessages
+          .orderBy("createdAt", "desc")
+          .onSnapshot(this.onCollectionUpdate);
       } else {
+        console.log("offline");
         // get messages from asyncStorage if user is offline
         this.getMessages();
         this.setState({ isConnected: false });
-      }});
-        
-
+      }
+    });
   }
 
   componentWillUnmount() {
     if (this.state.isConnected) {
-    // stops listening for changes in messages
-    this.unsubscribe();
-    this.authUnsubscribe();
-  }
+      // stops listening for changes in messages
+      this.unsubscribe();
+      this.authUnsubscribe();
+    }
   }
 
   onSend(messages = []) {
-    this.setState((previousState) => ({
-      messages: GiftedChat.append(previousState.messages, messages),
-    }),
-    () => {
-      this.addMessage();
-      this.saveMessages();
-    }
+    this.setState(
+      (previousState) => ({
+        messages: GiftedChat.append(previousState.messages, messages),
+      }),
+      () => {
+        this.addMessage();
+        this.saveMessages();
+      }
     );
   }
 
   // save messages to asyncStorage
   async saveMessages() {
     try {
-      await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
+      await AsyncStorage.setItem(
+        "messages",
+        JSON.stringify(this.state.messages)
+      );
     } catch (error) {
       console.log(error.message);
     }
@@ -166,17 +143,16 @@ export default class Chat extends React.Component {
 
   async deleteMessages() {
     try {
-      await AsyncStorage.removeItem('messages');
+      await AsyncStorage.removeItem("messages");
       this.setState({
-        messages: []
-      })
+        messages: [],
+      });
     } catch (error) {
       console.log(error.message);
     }
   }
 
   onCollectionUpdate = (querySnapshot) => {
-    if (!this.state.isConnected) return
     const messages = [];
     // go through each document
     querySnapshot.forEach((doc) => {
@@ -186,19 +162,16 @@ export default class Chat extends React.Component {
         _id: data._id,
         text: data.text,
         createdAt: data.createdAt.toDate(),
-        user: {
-          _id: data.user._id,
-          name: data.user.name,
-          avatar: data.user.avatar || "",
-        },
+        user: data.user
       });
     });
     // set new state of messages (with the added one)
     this.setState({
       messages,
     });
+    // Sync fetched messages with asyncStorage (local)
+    this.saveMessages();
   };
-
 
   // changes text bubble color
   renderBubble(props) {
@@ -207,43 +180,41 @@ export default class Chat extends React.Component {
         {...props}
         wrapperStyle={{
           left: {
-            backgroundColor: '#ebb765'
+            backgroundColor: "#ebb765",
           },
           right: {
-            backgroundColor: '#d8c6a9'
-          }
+            backgroundColor: "#d8c6a9",
+          },
         }}
       />
-    )
+    );
   }
 
   renderInputToolbar(props) {
     if (this.state.isConnected == false) {
     } else {
-      return(
-        <InputToolbar
-        {...props}
-        />
-      );
+      return <InputToolbar {...props} />;
     }
   }
 
   render() {
     let color = this.props.route.params.color;
     return (
-      <View style={{flex: 1, backgroundColor: color}}>
-          <GiftedChat
-            renderBubble={this.renderBubble.bind(this)}
-            renderInputToolbar={this.renderInputToolbar.bind(this)}
-            messages={this.state.messages}
-            onSend={(messages) => this.onSend(messages)}
-            user={{
-              _id: this.state.uid,
-              avatar: 'https://placeimg.com/140/140/any',
-            }}
-          />
-          {/* bug fix for older Android versions */}
-          { Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null } 
+      <View style={{ flex: 1, backgroundColor: color }}>
+        <GiftedChat
+          renderBubble={this.renderBubble.bind(this)}
+          renderInputToolbar={this.renderInputToolbar.bind(this)}
+          messages={this.state.messages}
+          onSend={(messages) => this.onSend(messages)}
+          user={{
+            _id: this.state.uid,
+            avatar: "https://placeimg.com/140/140/any",
+          }}
+        />
+        {/* bug fix for older Android versions */}
+        {Platform.OS === "android" ? (
+          <KeyboardAvoidingView behavior="height" />
+        ) : null}
       </View>
     );
   }
