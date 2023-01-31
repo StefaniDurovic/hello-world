@@ -68,11 +68,11 @@ A chat app built using React Native, Expo and Google Firebase. The app provides 
 > };
 ```
 -   Stil inside the `constructor` of your Chat component, initialize the app and create a reference to ChatMessages collection in Firestore:
-
+```javascript
 > if (!firebase.apps.length) {
 >        firebase.initializeApp(firebaseConfig);
 >    }
 
 > const referenceChatMessages = firebase.firestore().collection('messages');
-
+```
 -   Enjoy the App!
