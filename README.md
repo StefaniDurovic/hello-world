@@ -50,13 +50,13 @@ A chat app built using React Native, Expo and Google Firebase. The app provides 
 -   In your  [Firebase Console](https://console.firebase.google.com/), create a project in test mode.
 -   In your terminal, run  `npm install firebase@8.10.1` inside your project's root directory.
 -   At the top of your Chat.js file, require Firebase:
-
+```javascript
 > const  firebase = require('firebase');
 > require('firebase/firestore');
-
+```
 -   Back in the Firebase Console, navigate to Project Settings and select the  `</>`  icon to register your application.
 -   Copy the contents of the `config` object and store it in a variable inside the `constructor` of your Chat.js component:
-
+```javascript
 > const firebaseConfig = {
 >  apiKey: 'your-api-key',
 >  authDomain: 'your-authdomain',
@@ -66,7 +66,7 @@ A chat app built using React Native, Expo and Google Firebase. The app provides 
 >  messagingSenderId: 'your-messaging-sender-id',
 >  appId: 'your-app-id',
 > };
-
+```
 -   Stil inside the `constructor` of your Chat component, initialize the app and create a reference to ChatMessages collection in Firestore:
 
 > if (!firebase.apps.length) {
