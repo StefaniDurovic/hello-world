@@ -3,7 +3,7 @@ import { GiftedChat, Bubble, InputToolbar } from "react-native-gifted-chat";
 import { View, Platform, KeyboardAvoidingView } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from '@react-native-community/netinfo';
-import CustomActions from './CustomActions';
+import CustomActions from './CustomAction';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import MapView from 'react-native-maps';
 
@@ -84,6 +84,7 @@ export default class Chat extends React.Component {
             // update state with currently active user's data
             this.setState({
               messages: [],
+              uid: user.uid,
               user: {
                 _id: user.uid,
                 name,
@@ -143,8 +144,8 @@ export default class Chat extends React.Component {
       text: message.text || "",
       createdAt: message.createdAt,
       user: message.user,
-      image: message[0].image || null,
-      location: message[0].location || null
+      image: message.image || null,
+      location: message.location || null
   });
   };
 
